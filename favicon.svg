@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d1219"/>
+      <stop offset="100%" stop-color="#05070a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00ff88"/>
+      <stop offset="100%" stop-color="#00d4ff"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="64" height="64" rx="14" fill="url(#bg)" stroke="#1a2235" stroke-width="1.5"/>
+  <!-- PDF page icon -->
+  <path d="M18 10 H38 L46 18 V54 H18 Z" fill="none" stroke="url(#accent)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M38 10 V18 H46" fill="none" stroke="url(#accent)" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Arrow pointing right -->
+  <line x1="24" y1="32" x2="40" y2="32" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round"/>
+  <polyline points="36,27 41,32 36,37" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- EDI text -->
+  <text x="32" y="47" text-anchor="middle" font-family="monospace" font-size="9" font-weight="bold" fill="#00d4ff">835</text>
+</svg>

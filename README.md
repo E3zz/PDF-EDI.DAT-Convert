@@ -131,19 +131,6 @@ The generated 835 output includes:
 
 ---
 
-## ⚠️ Limitations
-
-- Scanned image-only PDFs (no embedded text layer) will not be processed — PDF.js extracts text, it does not perform true image OCR
-- Parser relies on regex patterns tuned for common US healthcare payer formats — unusual layouts may require pattern adjustments
-- Generated EDI output should be validated against your clearinghouse or practice management system before production use
-
----
-
-## 📄 License
-
-MIT — free for personal and commercial use.
-
----
 
 <p align="center">
   <em>Built for healthcare billing teams who need fast, private, offline EDI conversion.</em>
