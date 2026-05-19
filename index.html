@@ -1,121 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EOB → EDI Converter · Zero API · Local Engine</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EOB → EDI Converter · Zero API · Local Engine</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-<div class="page">
+  <div class="page">
 
-  <div class="hdr">
-    <div class="hdr-badge"><span class="pulse"></span>Local OCR Engine · Zero Cloud · 100% Private</div>
-    <h1>EOB → EDI Converter</h1>
-    <p class="hdr-sub">PDF.js extracts data · Rule engine builds ANSI X12 835 · No API key · No internet required</p>
-    <div class="no-api-chip">🔒 Fully offline · Your PDF never leaves your computer</div>
-  </div>
-
-  <!-- Pipeline -->
-  <div class="pipeline">
-    <div class="pipe-step" id="ps-upload"><div class="pipe-icon">📄</div><div class="pipe-label">Upload</div></div>
-    <div class="pipe-step" id="ps-ocr"><div class="pipe-icon">🔍</div><div class="pipe-label">OCR</div></div>
-    <div class="pipe-step" id="ps-parse"><div class="pipe-icon">🧩</div><div class="pipe-label">Parse</div></div>
-    <div class="pipe-step" id="ps-map"><div class="pipe-icon">🗺</div><div class="pipe-label">Map</div></div>
-    <div class="pipe-step" id="ps-build"><div class="pipe-icon">⚙️</div><div class="pipe-label">Build 835</div></div>
-    <div class="pipe-step" id="ps-export"><div class="pipe-icon">💾</div><div class="pipe-label">Export</div></div>
-  </div>
-
-  <!-- Upload -->
-  <div class="card">
-    <div class="card-title"><span class="num">1</span>Upload EOP / EOB PDF</div>
-    <div class="drop" id="dz" onclick="document.getElementById('fi').click()">
-      <span class="drop-icon">⬆︎</span>
-      <div class="drop-title">Drop your remittance PDF here</div>
-      <div class="drop-sub">EOP · EOB · ERA · Remittance Advice · Any payer format</div>
-      <div id="fpill"></div>
+    <div class="hdr">
+      <div class="hdr-badge"><span class="pulse"></span>Local OCR Engine · Zero Cloud · 100% Private</div>
+      <h1>EOB → EDI Converter</h1>
+      <p class="hdr-sub">PDF.js extracts data · Rule engine builds ANSI X12 835 · No API key · No internet required</p>
+      <div class="no-api-chip">🔒 Fully offline · Your PDF never leaves your computer</div>
     </div>
-    <input type="file" id="fi" accept=".pdf,application/pdf">
 
-    <div class="ocr-section" id="ocr-section">
-      <div class="section-hdr">
-        <span class="section-label">🔍 OCR Extraction</span>
-        <span class="badge green" id="ocr-badge">READY</span>
+    <!-- Pipeline -->
+    <div class="pipeline">
+      <div class="pipe-step" id="ps-upload">
+        <div class="pipe-icon">📄</div>
+        <div class="pipe-label">Upload</div>
       </div>
-      <div class="ocr-box" id="ocr-box">Waiting for PDF...</div>
-      <div class="conf-row">
-        <span class="conf-lbl">Extraction confidence</span>
-        <div class="conf-track"><div class="conf-fill" id="conf-fill"></div></div>
-        <span class="conf-pct" id="conf-pct">0%</span>
+      <div class="pipe-step" id="ps-ocr">
+        <div class="pipe-icon">🔍</div>
+        <div class="pipe-label">OCR</div>
+      </div>
+      <div class="pipe-step" id="ps-parse">
+        <div class="pipe-icon">🧩</div>
+        <div class="pipe-label">Parse</div>
+      </div>
+      <div class="pipe-step" id="ps-map">
+        <div class="pipe-icon">🗺</div>
+        <div class="pipe-label">Map</div>
+      </div>
+      <div class="pipe-step" id="ps-build">
+        <div class="pipe-icon">⚙️</div>
+        <div class="pipe-label">Build 835</div>
+      </div>
+      <div class="pipe-step" id="ps-export">
+        <div class="pipe-icon">💾</div>
+        <div class="pipe-label">Export</div>
       </div>
     </div>
 
-    <div class="detected-section" id="det-section">
-      <div class="section-hdr" style="margin-top:14px;">
-        <span class="section-label">📋 Detected Claims</span>
-        <span class="badge green" id="claim-count-badge">0 found</span>
+    <!-- Upload -->
+    <div class="card">
+      <div class="card-title"><span class="num">1</span>Upload EOP / EOB PDF</div>
+      <div class="drop" id="dz" onclick="document.getElementById('fi').click()">
+        <span class="drop-icon">⬆︎</span>
+        <div class="drop-title">Drop your remittance PDF here</div>
+        <div class="drop-sub">EOP · EOB · ERA · Remittance Advice · Any payer format</div>
+        <div id="fpill"></div>
       </div>
-      <div class="data-grid" id="data-grid"></div>
-    </div>
-  </div>
+      <input type="file" id="fi" accept=".pdf,application/pdf">
 
-  <!-- Options -->
-  <div class="card">
-    <div class="card-title"><span class="num">2</span>Output Options</div>
-    <div class="opts">
-      <div class="field"><label>Payer ID override</label><input type="text" id="payer-id" placeholder="auto-detect"></div>
-      <div class="field"><label>NPI override</label><input type="text" id="npi" placeholder="auto-detect"></div>
-      <div class="field"><label>Check date override</label><input type="date" id="chk-date"></div>
-      <div class="field"><label>File extension</label>
-        <select id="ext">
-          <option value="dat">.dat — auto-posting</option>
-          <option value="edi">.edi — standard</option>
-          <option value="txt">.txt — readable</option>
-          <option value="835">.835 — raw 835</option>
-        </select>
+      <div class="ocr-section" id="ocr-section">
+        <div class="section-hdr">
+          <span class="section-label">🔍 OCR Extraction</span>
+          <span class="badge green" id="ocr-badge">READY</span>
+        </div>
+        <div class="ocr-box" id="ocr-box">Waiting for PDF...</div>
+        <div class="conf-row">
+          <span class="conf-lbl">Extraction confidence</span>
+          <div class="conf-track">
+            <div class="conf-fill" id="conf-fill"></div>
+          </div>
+          <span class="conf-pct" id="conf-pct">0%</span>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <div class="divider"></div>
-
-  <button class="cvt-btn" id="cvt" disabled>GENERATE EDI 835 — NO API NEEDED</button>
-
-  <div class="prog-wrap" id="prog-wrap">
-    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
-    <div class="prog-steps">
-      <div class="prog-step" id="pst-ocr">OCR Extract</div>
-      <div class="prog-step" id="pst-parse">Parse Fields</div>
-      <div class="prog-step" id="pst-map">Map to 835</div>
-      <div class="prog-step" id="pst-build">Build Segments</div>
-      <div class="prog-step" id="pst-validate">Validate</div>
-      <div class="prog-step" id="pst-export">Export</div>
-    </div>
-  </div>
-
-  <div class="alert" id="alert"></div>
-
-  <div class="prev-wrap" id="prev-wrap">
-    <div class="prev-hdr">
-      <span class="prev-title">EDI 835 Output — Generated locally, no AI API used</span>
-      <div class="prev-stats">
-        <span class="spill" id="st-segs">—</span>
-        <span class="spill g" id="st-claims">—</span>
-        <span class="spill" id="st-amt">—</span>
+      <div class="detected-section" id="det-section">
+        <div class="section-hdr" style="margin-top:14px;">
+          <span class="section-label">📋 Detected Claims</span>
+          <span class="badge green" id="claim-count-badge">0 found</span>
+        </div>
+        <div class="data-grid" id="data-grid"></div>
       </div>
     </div>
-    <div class="prev-body" id="prev-body"></div>
+
+    <!-- Options -->
+    <div class="card">
+      <div class="card-title"><span class="num">2</span>Output Options</div>
+      <div class="opts">
+        <div class="field"><label>Payer ID override</label><input type="text" id="payer-id" placeholder="auto-detect">
+        </div>
+        <div class="field"><label>NPI override</label><input type="text" id="npi" placeholder="auto-detect"></div>
+        <div class="field"><label>Check date override</label><input type="date" id="chk-date"></div>
+        <div class="field"><label>File extension</label>
+          <select id="ext">
+            <option value="dat">.dat — auto-posting</option>
+            <option value="edi">.edi — standard</option>
+            <option value="txt">.txt — readable</option>
+            <option value="835">.835 — raw 835</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="cvt-btn" id="cvt" disabled>GENERATE EDI 835 </button>
+
+    <div class="prog-wrap" id="prog-wrap">
+      <div class="prog-track">
+        <div class="prog-fill" id="prog-fill"></div>
+      </div>
+      <div class="prog-steps">
+        <div class="prog-step" id="pst-ocr">OCR Extract</div>
+        <div class="prog-step" id="pst-parse">Parse Fields</div>
+        <div class="prog-step" id="pst-map">Map to 835</div>
+        <div class="prog-step" id="pst-build">Build Segments</div>
+        <div class="prog-step" id="pst-validate">Validate</div>
+        <div class="prog-step" id="pst-export">Export</div>
+      </div>
+    </div>
+
+    <div class="alert" id="alert"></div>
+
+    <div class="prev-wrap" id="prev-wrap">
+      <div class="prev-hdr">
+        <span class="prev-title">EDI 835 Output — Generated locally, no AI API used</span>
+        <div class="prev-stats">
+          <span class="spill" id="st-segs">—</span>
+          <span class="spill g" id="st-claims">—</span>
+          <span class="spill" id="st-amt">—</span>
+        </div>
+      </div>
+      <div class="prev-body" id="prev-body"></div>
+    </div>
+
+    <button class="dl-btn" id="dl">⬇ Download EDI File</button>
+
+    <div class="footer">
+      100% local processing · PDF.js OCR · Rule-based ANSI X12 835 engine · No API keys · No data upload ·
+      HIPAA-friendly<br>
+      Open source PDF parsing · Works offline after first load
+    </div>
   </div>
 
-  <button class="dl-btn" id="dl">⬇ Download EDI File</button>
-
-  <div class="footer">
-    100% local processing · PDF.js OCR · Rule-based ANSI X12 835 engine · No API keys · No data upload · HIPAA-friendly<br>
-    Open source PDF parsing · Works offline after first load
-  </div>
-</div>
-
-<script src="converter.js"></script>
+  <script src="converter.js"></script>
 </body>
+
 </html>
