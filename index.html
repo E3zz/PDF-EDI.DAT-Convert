@@ -7,6 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <title>EOB → EDI Converter · Zero API · Local Engine</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -50,14 +51,17 @@
 
     <!-- Upload -->
     <div class="card">
-      <div class="card-title"><span class="num">1</span>Upload EOP / EOB PDF</div>
+      <div class="card-title"><span class="num">1</span>Upload EOP / EOB PDF(s)</div>
       <div class="drop" id="dz" onclick="document.getElementById('fi').click()">
         <span class="drop-icon">⬆︎</span>
-        <div class="drop-title">Drop your remittance PDF here</div>
-        <div class="drop-sub">EOP · EOB · ERA · Remittance Advice · Any payer format</div>
+        <div class="drop-title">Drop your remittance PDF(s) here</div>
+        <div class="drop-sub">EOP · EOB · ERA · Remittance Advice · Single or bulk upload</div>
         <div id="fpill"></div>
       </div>
-      <input type="file" id="fi" accept=".pdf,application/pdf">
+      <input type="file" id="fi" accept=".pdf,application/pdf" multiple>
+
+      <!-- File Queue (bulk) -->
+      <div class="file-queue" id="file-queue"></div>
 
       <div class="ocr-section" id="ocr-section">
         <div class="section-hdr">
@@ -100,11 +104,23 @@
           </select>
         </div>
       </div>
+      <div class="opts" style="margin-top:10px;">
+        <div class="field"><label>Target Software</label>
+          <select id="software">
+            <option value="standard">Standard (most compatible)</option>
+            <option value="ecw">eClinicalWorks (ECW)</option>
+            <option value="advancedmd">AdvancedMD</option>
+            <option value="athena">athenaHealth</option>
+            <option value="nextgen">NextGen</option>
+            <option value="kareo">Kareo / Tebra</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <div class="divider"></div>
 
-    <button class="cvt-btn" id="cvt" disabled>GENERATE EDI 835 </button>
+    <button class="cvt-btn" id="cvt" disabled>GENERATE EDI 835</button>
 
     <div class="prog-wrap" id="prog-wrap">
       <div class="prog-track">
@@ -122,6 +138,9 @@
 
     <div class="alert" id="alert"></div>
 
+    <!-- Bulk results -->
+    <div class="bulk-results" id="bulk-results"></div>
+
     <div class="prev-wrap" id="prev-wrap">
       <div class="prev-hdr">
         <span class="prev-title">EDI 835 Output — Generated</span>
@@ -135,6 +154,7 @@
     </div>
 
     <button class="dl-btn" id="dl">⬇ Download EDI File</button>
+    <button class="dl-btn dl-zip" id="dl-zip">📦 Download All as ZIP</button>
 
     <div class="footer">
       100% local processing · PDF.js OCR · Rule-based ANSI X12 835 engine · No data upload ·

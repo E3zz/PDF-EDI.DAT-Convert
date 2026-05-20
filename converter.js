@@ -132,6 +132,16 @@ function parseEOB(text) {
   const provAddrLines = text.match(/([A-Z][A-Z\s]+BLVD|[A-Z][A-Z\s]+ST|[A-Z][A-Z\s]+AVE|[A-Z][A-Z\s]+RD)[^\n]*/i);
   if (provAddrLines) data.provider.address = provAddrLines[0].trim();
 
+  // Provider city/state/zip — find all city/state/zip matches, assign second to provider
+  const allCSZ = [...text.matchAll(/([A-Z][a-zA-Z\s]+),\s*([A-Z]{2})\s+(\d{5})/g)];
+  if (allCSZ.length >= 2) {
+    data.provider.city = allCSZ[1][1].trim();
+    data.provider.state = allCSZ[1][2];
+    data.provider.zip = allCSZ[1][3];
+  } else if (allCSZ.length === 1 && !data.payer.city) {
+    // If only one match and payer didn't get it, try for provider
+  }
+
   // Claims — detect claim blocks by Patient: pattern
   const claimBlocks = [];
   const patientPattern = /Patient[:\s]+([A-Z][A-Z\-]+(?:,\s*[A-Z][A-Z\-]+)?(?:\s+[A-Z]+)?)/gi;
@@ -264,9 +274,10 @@ function buildEDI835(data, overrides) {
   if (data.payer?.address) seg(`N3*${data.payer.address.toUpperCase().slice(0, 55)}`);
   if (data.payer?.city) seg(`N4*${(data.payer.city || '').toUpperCase()}*${data.payer.state || ''}*${data.payer.zip || ''}`);
 
-  // Provider N1 loop
+  // Provider N1 loop — N3+N4 required to close PE loop for ECW and other PMS
   seg(`N1*PE*${provName}*XX*${npi}`);
-  if (data.provider?.address) seg(`N3*${data.provider.address.toUpperCase().slice(0, 55)}`);
+  seg(`N3*${(data.provider?.address || 'ADDRESS').toUpperCase().slice(0, 55)}`);
+  seg(`N4*${(data.provider?.city || '').toUpperCase()}*${data.provider?.state || ''}*${data.provider?.zip || ''}`);
 
   // Claims
   const claims = data.claims || [];
@@ -279,7 +290,7 @@ function buildEDI835(data, overrides) {
     const paid = claim.totalPaid || claim.lines[0]?.paid || '0.00';
     const memberId = claim.memberId || claim.patientNum || '';
 
-    seg(`CLP*${claimNum}*1*${billed}*${paid}**HC*${memberId}`);
+    seg(`CLP*${claimNum}*1*${billed}*${paid}***${memberId}`);
 
     // Patient NM1
     const nameParts = claim.patientName.split(/[,\s]+/).filter(Boolean);
@@ -302,7 +313,7 @@ function buildEDI835(data, overrides) {
       const dosTo = yyyymmdd(line.dosTo || line.dosFrom);
       seg(`DTM*232*${dosFrom}`);
       seg(`DTM*233*${dosTo}`);
-      seg(`SVC*HC:${line.cpt}*${line.billed}*${line.paid}**${line.billedUnits || 1}`);
+      seg(`SVC*HC:${line.cpt}*${line.billed}*${line.paid}***${parseInt(line.billedUnits) || 1}`);
       seg(`DTM*472*${dosFrom}`);
       if (parseFloat(line.discount || 0) > 0)
         seg(`CAS*CO*45*${line.discount}`);
@@ -311,8 +322,9 @@ function buildEDI835(data, overrides) {
   });
 
   // Trailer
-  const segCount = segs.length + 1; // +1 for SE itself
-  seg(`PLB*${npi}*${checkDate}*CV*0.00`);
+  seg(`PLB*${npi}*${checkDate}*CV:ADJUST*0.00`);
+  // SE count = segments from ST to SE inclusive (exclude ISA, GS; +1 for SE itself)
+  const segCount = (segs.length - 2) + 1;
   seg(`SE*${segCount}*0001`);
   seg('GE*1*1');
   seg('IEA*1*' + pad(checkNum, 9, '0'));
